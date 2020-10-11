@@ -12,52 +12,75 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0'
 }
 
+URL = 'https://www.worldometers.info/coronavirus/'
 ACCEPTED_GLOBAL_PARAMS = ['g', 'global', '-g', '-global']
 ACCEPTED_LOCAL_PARAMS = ['l', 'local', '-l', '-local']
 
-def get_global_infected_count(soup):
-    total_count = soup.select('.maincounter-number')
-    return total_count[0].text.strip()
+def get_global_infected_count(global_case_info):
+    '''Returns global total infected count'''
+    return global_case_info[0].text.strip()
 
-def get_global_deaths_count(soup):
-    total_count = soup.select('.maincounter-number')
-    return total_count[1].text.strip()
+def get_global_deaths_count(global_case_info):
+    '''Returns global total death count'''
+    return global_case_info[1].text.strip()
 
-def get_global_recovered_count(soup):
-    total_count = soup.select('.maincounter-number')
-    return total_count[2].text.strip()
+def get_global_recovered_count(global_case_info):
+    '''Returns global total recovery count'''
+    return global_case_info[2].text.strip()
 
-def get_global_active_cases(soup):
-    active_cases = soup.select('.panel_flip .panel_front .number-table-main')
-    return active_cases[0].text.strip()
+def get_global_active_cases(global_active_case_info):
+    '''Returns global active case count'''
+    return global_active_case_info[0].text.strip()
 
-def get_global_closed_cases(soup):
-    closed_cases = soup.select('.panel_flip .panel_front .number-table-main')
-    return closed_cases[1].text.strip()
+def get_global_closed_cases(global_active_case_info):
+    '''Returns global closed case count'''
+    return global_active_case_info[1].text.strip()
 
-def get_local_page():
-    pass
+def get_local_infected_count(local_case_info):
+    '''Returns state-wise total infected count'''
+    return local_case_info[0].text.strip()
+
+def get_local_death_count(local_case_info):
+    '''Returns state-wise total death count'''
+    return local_case_info[1].text.strip()
+
+def get_local_recovered_count(local_case_info):
+    '''Returns state-wise total recovery count'''
+    return local_case_info[2].text.strip()
 
 def main():
-    res = requests.get('https://www.worldometers.info/coronavirus/', headers=headers)
+    res = requests.get(URL, headers=headers)
     res.raise_for_status()
     soup = bs4.BeautifulSoup(res.text, 'html.parser')
 
-    infected_count = get_global_infected_count(soup)
-    death_count = get_global_deaths_count(soup)
-    recovered_count = get_global_recovered_count(soup)
-    active_cases = get_global_active_cases(soup)
-    closed_cases = get_global_closed_cases(soup)
+    global_case_info = soup.select('.maincounter-number')
+    global_active_case_info = soup.select('.panel_flip .panel_front .number-table-main')
+    
+    # Global info
+    infected_count = get_global_infected_count(global_case_info)
+    death_count = get_global_deaths_count(global_case_info)
+    recovered_count = get_global_recovered_count(global_case_info)
+    active_cases = get_global_active_cases(global_active_case_info)
+    closed_cases = get_global_closed_cases(global_active_case_info)
 
+    # Retrieving local info
     g = geocoder.ip('me')
     city, state, country = g.city, g.state, g.country
+    STATE_NAME = state
+    COUNTRY_NAME = country
     
-    if country == 'US': # Handling discrepancy between nomenclature
+    # Handling discrepancy between nomenclature
+    if country == 'US': 
         country = 'USA'
 
-    print(city, ',', state, ',', country)
-
+    # Resolving URL for retrieving local info
     state = '-'.join(name for name in state.split())
+    local_url = URL + '/' + country.lower() + '/' + state.lower() + '/'
+    local_res = requests.get(local_url, headers=headers)
+    local_res.raise_for_status()
+    local = bs4.BeautifulSoup(local_res.text, 'html.parser')
+
+    local_case_info = local.select('#maincounter-wrap .maincounter-number')
 
     if (len(sys.argv) == 1) or (len(sys.argv) == 2 and sys.argv[1] in ACCEPTED_GLOBAL_PARAMS):
         print('Total infected cases: {0} | Total deaths: {1} | Total recovered: {2}'.format(infected_count, death_count, recovered_count))
