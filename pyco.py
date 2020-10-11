@@ -2,6 +2,7 @@ import time
 import sys
 import requests
 import bs4
+import geocoder
 
 headers = {
     'Access-Control-Allow-Origin': '*',
@@ -38,7 +39,7 @@ def get_local_page():
     pass
 
 def main():
-    res = requests.get('https://www.worldometers.info/coronavirus/')
+    res = requests.get('https://www.worldometers.info/coronavirus/', headers=headers)
     res.raise_for_status()
     soup = bs4.BeautifulSoup(res.text, 'html.parser')
 
@@ -48,9 +49,20 @@ def main():
     active_cases = get_global_active_cases(soup)
     closed_cases = get_global_closed_cases(soup)
 
+    g = geocoder.ip('me')
+    city, state, country = g.city, g.state, g.country
+    
+    if country == 'US': # Handling discrepancy between nomenclature
+        country = 'USA'
+
+    print(city, ',', state, ',', country)
+
+    state = '-'.join(name for name in state.split())
+
     if (len(sys.argv) == 1) or (len(sys.argv) == 2 and sys.argv[1] in ACCEPTED_GLOBAL_PARAMS):
         print('Total infected cases: {0} | Total deaths: {1} | Total recovered: {2}'.format(infected_count, death_count, recovered_count))
         print('Active cases: {0} | Closed cases: {1}'.format(active_cases, closed_cases))
+
 
 if __name__ == '__main__':
     main()
