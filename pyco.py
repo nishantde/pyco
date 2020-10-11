@@ -19,9 +19,10 @@ def main():
     res = requests.get('https://www.worldometers.info/coronavirus/')
     res.raise_for_status()
     soup = bs4.BeautifulSoup(res.text, 'html.parser')
-    print(get_global_infected_count(soup))
-    print(get_global_deaths_count(soup))
-    print(get_global_recovered_count(soup))
+    infected_count = get_global_infected_count(soup)
+    death_count = get_global_deaths_count(soup)
+    recovered_count = get_global_recovered_count(soup)
+    print('Total infected cases: {0} | Total deaths: {1} | Total recovered: {2}'.format(infected_count, death_count, recovered_count))
 
 if __name__ == '__main__':
     main()
