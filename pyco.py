@@ -1,4 +1,4 @@
-import time
+import datetime
 import sys
 import requests
 import bs4
@@ -12,6 +12,7 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0'
 }
 
+TODAY = str(datetime.datetime.now()).split()[0]
 URL = 'https://www.worldometers.info/coronavirus/'
 ACCEPTED_GLOBAL_PARAMS = ['g', 'global', '-g', '-global']
 ACCEPTED_LOCAL_PARAMS = ['l', 'local', '-l', '-local']
@@ -76,7 +77,7 @@ def main():
 
     # Retrieve global info if no parameters are given or acceptable global parameters are given
     if (len(sys.argv) == 1) or (len(sys.argv) == 2 and sys.argv[1] in ACCEPTED_GLOBAL_PARAMS):
-        print('Global cases')
+        print('Global cases as of', TODAY)
         display_cases(infected_count, death_count, recovered_count)
         display_active_cases(active_cases, closed_cases)
 
@@ -104,6 +105,7 @@ def main():
             local_death_count = get_local_death_count(local_case_info)
             local_recovered_count = get_local_recovered_count(local_case_info)
 
+            print('Local cases as of', TODAY)
             print('State: {0} & Country: {1}'.format(STATE_NAME, COUNTRY_NAME))
             display_cases(local_infected_count, local_death_count, local_recovered_count)
 
